@@ -406,7 +406,7 @@ export default function TaxFlowPage() {
                 <label className="block text-sm font-medium text-black mb-2">Business Type</label>
                 <select
                   value={businessType}
-                  onChange={(e) => setBusinessType(e.target.value as any)}
+                  onChange={(e) => setBusinessType(e.target.value as 'eenmanszaak' | 'bv' | 'vof' | 'maatschap')}
                   className="w-full px-4 py-3 bg-white border border-gray-300 text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                 >
                   <option value="eenmanszaak">Eenmanszaak (Sole Proprietorship)</option>
