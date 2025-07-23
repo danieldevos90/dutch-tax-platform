@@ -1,5 +1,6 @@
 import { geminiTaxAgent } from './gemini-tax-agent'
 import * as XLSX from 'xlsx'
+import { supabaseTransactionService, Transaction } from './supabase-transactions'
 
 export interface ExcelTransaction {
   date: string
@@ -36,6 +37,7 @@ export interface TaxFlowResult {
   recommendations: string[]
   warnings: string[]
   processingTime: number
+  sessionId?: string
 }
 
 export interface TaxCalculationFlow {
@@ -66,18 +68,19 @@ export interface TaxFlowCalculationResult {
 
 export class TaxFlowProcessor {
   /**
-   * Process Excel file with AI-powered categorization
+   * Process Excel/CSV file with AI-powered categorization
    */
-  async processExcelFile(
+  async processFile(
     file: File,
     businessType: 'eenmanszaak' | 'bv' | 'vof' | 'maatschap',
-    businessSector?: string
+    businessSector?: string,
+    userId?: string
   ): Promise<TaxFlowResult> {
     const startTime = Date.now()
     
     try {
-      // Read Excel file
-      const transactions = await this.readExcelFile(file)
+      // Read file (Excel or CSV)
+      const transactions = await this.readFile(file)
       
       // Process transactions with AI
       const processedTransactions = await this.processTransactionsWithAI(
@@ -98,6 +101,122 @@ export class TaxFlowProcessor {
       
       const processingTime = Date.now() - startTime
       
+      // Save to Supabase if userId provided
+      let sessionId: string | undefined
+      if (userId) {
+        const transactionsToSave: Transaction[] = processedTransactions.map(t => ({
+          user_id: userId,
+          date: t.date,
+          description: t.description,
+          amount: t.amount,
+          type: t.amount > 0 ? 'income' : 'expense',
+          merchant: t.merchant,
+          category: t.category,
+          notes: t.notes,
+          ai_category: t.aiCategory,
+          ai_subcategory: t.aiSubcategory,
+          is_deductible: t.isDeductible,
+          deductible_percentage: t.deductiblePercentage,
+          vat_reclaimable: t.vatReclaimable,
+          vat_percentage: t.vatPercentage,
+          is_kia_eligible: t.isKiaEligible,
+          tax_implications: t.taxImplications,
+          confidence: t.confidence,
+          reasoning: t.reasoning,
+          source: 'csv_upload'
+        }))
+        
+        const saveResult = await supabaseTransactionService.saveTransactions(transactionsToSave)
+        if (!saveResult.success) {
+          console.error('Failed to save transactions:', saveResult.error)
+        }
+      }
+      
+      return {
+        transactions: processedTransactions,
+        summary,
+        recommendations,
+        warnings: this.generateWarnings(processedTransactions),
+        processingTime,
+        sessionId
+      }
+    } catch (error) {
+      console.error('Error processing Excel file:', error)
+      throw new Error('Failed to process Excel file')
+    }
+  }
+
+  /**
+   * Process Revolut transactions with AI categorization
+   */
+  async processRevolutTransactions(
+    transactions: any[],
+    businessType: 'eenmanszaak' | 'bv' | 'vof' | 'maatschap',
+    businessSector?: string,
+    userId?: string
+  ): Promise<TaxFlowResult> {
+    const startTime = Date.now()
+    
+    try {
+      // Convert Revolut transactions to our format
+      const excelTransactions: ExcelTransaction[] = transactions.map(t => ({
+        date: t.created_at || t.date || new Date().toISOString().split('T')[0],
+        description: t.description || t.reference || '',
+        amount: parseFloat(t.amount) || 0,
+        merchant: t.counterparty?.name || t.merchant || undefined,
+        category: undefined, // Will be set by AI
+        notes: t.reference || undefined
+      }))
+      
+      // Process transactions with AI
+      const processedTransactions = await this.processTransactionsWithAI(
+        excelTransactions,
+        businessType,
+        businessSector
+      )
+      
+      // Generate summary
+      const summary = this.generateSummary(processedTransactions)
+      
+      // Get AI recommendations
+      const recommendations = await this.getFlowRecommendations(
+        processedTransactions,
+        businessType,
+        businessSector
+      )
+      
+      const processingTime = Date.now() - startTime
+      
+      // Save to Supabase if userId provided
+      if (userId) {
+        const transactionsToSave: Transaction[] = processedTransactions.map(t => ({
+          user_id: userId,
+          date: t.date,
+          description: t.description,
+          amount: t.amount,
+          type: t.amount > 0 ? 'income' : 'expense',
+          merchant: t.merchant,
+          category: t.category,
+          notes: t.notes,
+          ai_category: t.aiCategory,
+          ai_subcategory: t.aiSubcategory,
+          is_deductible: t.isDeductible,
+          deductible_percentage: t.deductiblePercentage,
+          vat_reclaimable: t.vatReclaimable,
+          vat_percentage: t.vatPercentage,
+          is_kia_eligible: t.isKiaEligible,
+          tax_implications: t.taxImplications,
+          confidence: t.confidence,
+          reasoning: t.reasoning,
+          source: 'revolut_api'
+        }))
+        
+        const saveResult = await supabaseTransactionService.saveTransactions(transactionsToSave)
+        if (!saveResult.success) {
+          console.error('Failed to save Revolut transactions:', saveResult.error)
+        }
+      }
+      
       return {
         transactions: processedTransactions,
         summary,
@@ -106,8 +225,8 @@ export class TaxFlowProcessor {
         processingTime
       }
     } catch (error) {
-      console.error('Error processing Excel file:', error)
-      throw new Error('Failed to process Excel file')
+      console.error('Error processing Revolut transactions:', error)
+      throw new Error('Failed to process Revolut transactions')
     }
   }
 
@@ -229,31 +348,58 @@ Format the report in clear, professional language with proper Dutch tax terminol
   }
 
   /**
-   * Read and parse Excel file
+   * Read and parse Excel or CSV file
    */
-  private async readExcelFile(file: File): Promise<ExcelTransaction[]> {
+  private async readFile(file: File): Promise<ExcelTransaction[]> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
       
       reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer)
-          const workbook = XLSX.read(data, { type: 'array' })
-          const sheetName = workbook.SheetNames[0]
-          const worksheet = workbook.Sheets[sheetName]
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
           
-          // Skip header row and map to transactions
-          const transactions: ExcelTransaction[] = jsonData.slice(1).map((row: any) => ({
-            date: row[0] || new Date().toISOString().split('T')[0],
-            description: row[1] || '',
-            amount: parseFloat(row[2]) || 0,
-            merchant: row[3] || undefined,
-            category: row[4] || undefined,
-            notes: row[5] || undefined
-          })).filter(t => t.description && t.amount > 0)
-          
-          resolve(transactions)
+          // Check if it's a CSV file
+          if (file.name.endsWith('.csv')) {
+            const text = new TextDecoder().decode(data)
+            const lines = text.split('\n')
+            const headers = lines[0].split(',').map(h => h.trim())
+            
+            // Skip header row and map to transactions
+            const transactions: ExcelTransaction[] = lines.slice(1)
+              .filter(line => line.trim())
+              .map(line => {
+                const values = line.split(',').map(v => v.trim().replace(/"/g, ''))
+                return {
+                  date: values[0] || new Date().toISOString().split('T')[0],
+                  description: values[1] || '',
+                  amount: parseFloat(values[2]) || 0,
+                  merchant: values[3] || undefined,
+                  category: values[4] || undefined,
+                  notes: values[5] || undefined
+                }
+              })
+              .filter(t => t.description && t.amount !== 0)
+            
+            resolve(transactions)
+          } else {
+            // Excel file processing
+            const workbook = XLSX.read(data, { type: 'array' })
+            const sheetName = workbook.SheetNames[0]
+            const worksheet = workbook.Sheets[sheetName]
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
+            
+            // Skip header row and map to transactions
+            const transactions: ExcelTransaction[] = jsonData.slice(1).map((row: any) => ({
+              date: row[0] || new Date().toISOString().split('T')[0],
+              description: row[1] || '',
+              amount: parseFloat(row[2]) || 0,
+              merchant: row[3] || undefined,
+              category: row[4] || undefined,
+              notes: row[5] || undefined
+            })).filter(t => t.description && t.amount !== 0)
+            
+            resolve(transactions)
+          }
         } catch (error) {
           reject(error)
         }

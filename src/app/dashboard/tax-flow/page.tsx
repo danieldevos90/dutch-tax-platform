@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { Upload, FileSpreadsheet, Calculator, Download, AlertCircle, CheckCircle, Loader2, Bot, TrendingUp, BarChart3, FileText } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Upload, FileSpreadsheet, Calculator, Download, AlertCircle, CheckCircle, Loader2, Bot, TrendingUp, BarChart3, FileText, CreditCard, Database } from 'lucide-react'
+import { useAuth } from '@/components/auth/AuthProvider'
+import { supabaseTransactionService } from '@/lib/supabase-transactions'
 
 interface ProcessedTransaction {
   date: string
@@ -55,10 +57,14 @@ interface TaxCalculationResult {
 }
 
 export default function TaxFlowPage() {
+  const { user } = useAuth()
   const [activeStep, setActiveStep] = useState<'upload' | 'process' | 'calculate' | 'report'>('upload')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  
+  // Data source selection
+  const [dataSource, setDataSource] = useState<'csv' | 'revolut'>('csv')
   
   // File upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -78,23 +84,55 @@ export default function TaxFlowPage() {
   // Report state
   const [taxReport, setTaxReport] = useState<string>('')
   
+  // Existing data state
+  const [existingTransactions, setExistingTransactions] = useState<any[] | null>(null)
+  const [transactionSummary, setTransactionSummary] = useState<any>(null)
+  
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Load existing data on component mount
+  useEffect(() => {
+    if (user) {
+      loadExistingData()
+    }
+  }, [user])
+
+  const loadExistingData = async () => {
+    if (!user) return
+    
+    try {
+      const [transactionsResult, summaryResult] = await Promise.all([
+        supabaseTransactionService.getTransactions(user.id),
+        supabaseTransactionService.getTransactionSummary(user.id)
+      ])
+      
+      setExistingTransactions(transactionsResult.data)
+      setTransactionSummary(summaryResult)
+    } catch (error) {
+      console.error('Error loading existing data:', error)
+    }
+  }
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv')) {
         setSelectedFile(file)
         setError('')
       } else {
-        setError('Please select an Excel file (.xlsx or .xls)')
+        setError('Please select an Excel (.xlsx, .xls) or CSV file')
       }
     }
   }
 
-  const handleProcessExcel = async () => {
-    if (!selectedFile || !businessType) {
+  const handleProcessData = async () => {
+    if (dataSource === 'csv' && (!selectedFile || !businessType)) {
       setError('Please select a file and business type')
+      return
+    }
+
+    if (dataSource === 'revolut' && !businessType) {
+      setError('Please select business type')
       return
     }
 
@@ -102,29 +140,36 @@ export default function TaxFlowPage() {
     setError('')
 
     try {
-      const formData = new FormData()
-      formData.append('file', selectedFile)
-      formData.append('businessType', businessType)
-      if (businessSector) {
-        formData.append('businessSector', businessSector)
-      }
+      if (dataSource === 'csv') {
+        const formData = new FormData()
+        formData.append('file', selectedFile!)
+        formData.append('businessType', businessType)
+        if (businessSector) {
+          formData.append('businessSector', businessSector)
+        }
 
-      const response = await fetch('/api/tax-flow/process-excel', {
-        method: 'POST',
-        body: formData
-      })
+        const response = await fetch('/api/tax-flow/process-excel', {
+          method: 'POST',
+          body: formData
+        })
 
-      const data = await response.json()
-      
-      if (data.success) {
-        setFlowResult(data.result)
-        setSuccess(`Processed ${data.result.transactions.length} transactions in ${(data.result.processingTime / 1000).toFixed(1)}s`)
-        setActiveStep('calculate')
+        const data = await response.json()
+        
+        if (data.success) {
+          setFlowResult(data.result)
+          setSuccess(`Processed ${data.result.transactions.length} transactions in ${(data.result.processingTime / 1000).toFixed(1)}s`)
+          setActiveStep('calculate')
+          await loadExistingData() // Refresh data
+        } else {
+          setError(data.error || 'Failed to process file')
+        }
       } else {
-        setError(data.error || 'Failed to process Excel file')
+        // For Revolut, we would need to fetch transactions from Revolut API
+        // This is a placeholder - in a real implementation, you'd fetch from Revolut
+        setError('Revolut integration not yet implemented')
       }
     } catch (error) {
-      setError('Failed to process Excel file')
+      setError('Failed to process data')
     } finally {
       setIsLoading(false)
     }
@@ -303,10 +348,40 @@ export default function TaxFlowPage() {
         {activeStep === 'upload' && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-xl font-semibold text-black mb-4">Upload Excel File</h2>
-              <p className="text-gray-600 mb-6">Upload your transaction Excel file for AI-powered categorization and tax analysis.</p>
+              <h2 className="text-xl font-semibold text-black mb-4">Data Source</h2>
+              <p className="text-gray-600 mb-6">Choose how to import your transaction data for AI-powered categorization and tax analysis.</p>
             </div>
 
+            {/* Data Source Selection */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                onClick={() => setDataSource('csv')}
+                className={`p-6 border-2 rounded-lg text-left transition-colors ${
+                  dataSource === 'csv'
+                    ? 'border-black bg-black text-white'
+                    : 'border-gray-200 bg-white text-black hover:border-gray-300'
+                }`}
+              >
+                <FileSpreadsheet className="w-8 h-8 mb-3" />
+                <h3 className="font-semibold mb-2">Upload CSV/Excel</h3>
+                <p className="text-sm opacity-80">Upload your transaction file (.csv, .xlsx, .xls)</p>
+              </button>
+              
+              <button
+                onClick={() => setDataSource('revolut')}
+                className={`p-6 border-2 rounded-lg text-left transition-colors ${
+                  dataSource === 'revolut'
+                    ? 'border-black bg-black text-white'
+                    : 'border-gray-200 bg-white text-black hover:border-gray-300'
+                }`}
+              >
+                <CreditCard className="w-8 h-8 mb-3" />
+                <h3 className="font-semibold mb-2">Connect Revolut</h3>
+                <p className="text-sm opacity-80">Import transactions from your Revolut account</p>
+              </button>
+            </div>
+
+            {/* Business Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-black mb-2">Business Name</label>
@@ -344,35 +419,63 @@ export default function TaxFlowPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-black mb-2">Excel File</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-                <FileSpreadsheet className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-2">
-                  {selectedFile ? selectedFile.name : 'Click to select Excel file'}
-                </p>
-                <p className="text-sm text-gray-500 mb-4">
-                  Supported formats: .xlsx, .xls (max 10MB)
-                </p>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 bg-gray-100 text-black rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Select File
-                </button>
+            {/* File Upload (only for CSV) */}
+            {dataSource === 'csv' && (
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">Transaction File</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <FileSpreadsheet className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 mb-2">
+                    {selectedFile ? selectedFile.name : 'Click to select file'}
+                  </p>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Supported formats: .csv, .xlsx, .xls (max 10MB)
+                  </p>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-4 py-2 bg-gray-100 text-black rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Select File
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Existing Data Summary */}
+            {transactionSummary && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-black mb-4">Existing Data</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Total Transactions</p>
+                    <p className="text-xl font-bold text-black">{transactionSummary.totalTransactions}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Total Amount</p>
+                    <p className="text-xl font-bold text-black">€{transactionSummary.totalAmount.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Deductible</p>
+                    <p className="text-xl font-bold text-black">€{transactionSummary.totalDeductible.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">KIA Eligible</p>
+                    <p className="text-xl font-bold text-black">€{transactionSummary.kiaEligibleAmount.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <button
-              onClick={handleProcessExcel}
-              disabled={isLoading || !selectedFile}
+              onClick={handleProcessData}
+              disabled={isLoading || (dataSource === 'csv' && !selectedFile)}
               className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center space-x-2 disabled:opacity-50"
             >
               {isLoading ? (
@@ -385,7 +488,7 @@ export default function TaxFlowPage() {
           </div>
         )}
 
-        {activeStep === 'calculate' && flowResult && (
+        {activeStep === 'calculate' && (
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-semibold text-black mb-4">Tax Calculation</h2>
@@ -393,24 +496,32 @@ export default function TaxFlowPage() {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-gray-600">Total Transactions</h3>
-                <p className="text-2xl font-bold text-black">{flowResult.transactions.length}</p>
+            {flowResult ? (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-gray-600">Total Transactions</h3>
+                  <p className="text-2xl font-bold text-black">{flowResult.transactions.length}</p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-gray-600">Total Amount</h3>
+                  <p className="text-2xl font-bold text-black">€{flowResult.summary.totalAmount.toLocaleString()}</p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-gray-600">Deductible</h3>
+                  <p className="text-2xl font-bold text-black">€{flowResult.summary.totalDeductible.toLocaleString()}</p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-gray-600">KIA Eligible</h3>
+                  <p className="text-2xl font-bold text-black">€{flowResult.summary.kiaEligibleAmount.toLocaleString()}</p>
+                </div>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-gray-600">Total Amount</h3>
-                <p className="text-2xl font-bold text-black">€{flowResult.summary.totalAmount.toLocaleString()}</p>
+            ) : (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+                <Database className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">No Data Available</h3>
+                <p className="text-gray-500">Please upload transaction data or connect your Revolut account first.</p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-gray-600">Deductible</h3>
-                <p className="text-2xl font-bold text-black">€{flowResult.summary.totalDeductible.toLocaleString()}</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-gray-600">KIA Eligible</h3>
-                <p className="text-2xl font-bold text-black">€{flowResult.summary.kiaEligibleAmount.toLocaleString()}</p>
-              </div>
-            </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
@@ -447,7 +558,7 @@ export default function TaxFlowPage() {
 
             <button
               onClick={handleCalculateTax}
-              disabled={isLoading || !annualRevenue.trim()}
+              disabled={isLoading || !annualRevenue.trim() || !flowResult}
               className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center space-x-2 disabled:opacity-50"
             >
               {isLoading ? (

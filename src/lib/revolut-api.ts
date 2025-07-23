@@ -57,10 +57,10 @@ export interface RevolutTransaction {
     category?: string
   }
   counterparty?: {
-    id: string
-    name: string
+  id: string
+  name: string
     phone?: string
-    country?: string
+  country?: string
   }
   created_at: string
   updated_at: string
@@ -90,7 +90,7 @@ class RevolutAPI {
       'Content-Type': 'application/json',
       ...options.headers,
     }
-
+    
     const response = await fetch(url, {
       ...options,
       headers,
@@ -123,7 +123,7 @@ class RevolutAPI {
   private async refreshAccessToken() {
     if (!this.refreshToken) {
       throw new Error('No refresh token available')
-    }
+  }
 
     // In a real implementation, you would make a request to refresh the token
     // For now, we'll simulate this
@@ -168,7 +168,7 @@ class RevolutAPI {
         ...account,
         status: 'connected' as const,
         lastSync: new Date().toISOString(),
-      }
+    }
     } catch (error) {
       console.error('Error fetching account bank details:', error)
       throw error
@@ -206,8 +206,8 @@ class RevolutAPI {
       
       // Fetch accounts after connection
       const accounts = await this.getAccounts()
-      
-      return {
+  
+  return {
         isConnected: true,
         accessToken: mockAccessToken,
         refreshToken: mockRefreshToken,
@@ -217,8 +217,8 @@ class RevolutAPI {
     } catch (error) {
       console.error('Error connecting to Revolut:', error)
       throw error
-    }
   }
+}
 
   // Disconnect from Revolut
   disconnect() {

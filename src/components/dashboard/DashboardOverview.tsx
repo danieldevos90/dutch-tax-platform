@@ -126,7 +126,7 @@ export default function DashboardOverview() {
           </button>
           <button className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors">
             Export Report
-          </button>
+        </button>
         </div>
       </div>
 
@@ -140,10 +140,10 @@ export default function DashboardOverview() {
                 <div>
                   <p className="text-sm font-medium text-gray-500">{stat.name}</p>
                   <p className="text-2xl font-bold text-black mt-1">{stat.value}</p>
-                </div>
+            </div>
                 <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                   <Icon className="w-6 h-6 text-black" />
-                </div>
+            </div>
               </div>
               <div className="flex items-center mt-4">
                 {stat.changeType === 'positive' ? (
@@ -157,11 +157,11 @@ export default function DashboardOverview() {
                   {stat.change}
                 </span>
                 <span className="text-sm text-gray-500 ml-1">from last month</span>
-              </div>
+            </div>
             </div>
           )
         })}
-      </div>
+          </div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

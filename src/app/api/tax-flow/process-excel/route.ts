@@ -1,8 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { taxFlowProcessor } from '@/lib/tax-flow-processor'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
 export async function POST(request: NextRequest) {
   try {
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+        },
+      }
+    )
+    
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File
     const businessType = formData.get('businessType') as 'eenmanszaak' | 'bv' | 'vof' | 'maatschap'
@@ -16,9 +40,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls') && !file.name.endsWith('.csv')) {
       return NextResponse.json(
-        { error: 'Only Excel files (.xlsx, .xls) are supported' },
+        { error: 'Only Excel (.xlsx, .xls) or CSV files are supported' },
         { status: 400 }
       )
     }
@@ -31,10 +55,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const result = await taxFlowProcessor.processExcelFile(
+    const result = await taxFlowProcessor.processFile(
       file,
       businessType,
-      businessSector
+      businessSector,
+      user.id
     )
 
     return NextResponse.json({
@@ -43,9 +68,9 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error processing Excel file:', error)
+    console.error('Error processing file:', error)
     return NextResponse.json(
-      { error: 'Failed to process Excel file' },
+      { error: 'Failed to process file' },
       { status: 500 }
     )
   }
