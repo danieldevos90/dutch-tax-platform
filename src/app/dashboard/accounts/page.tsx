@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { 
   CreditCard, 
   TrendingUp, 
@@ -7,84 +8,152 @@ import {
   Plus,
   Settings,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Database,
+  AlertCircle,
+  Loader2
 } from 'lucide-react'
+import { useAuth } from '@/components/auth/AuthProvider'
 
-const accounts = [
-  {
-    id: 1,
-    name: 'Revolut Business EUR',
-    type: 'Business',
-    currency: 'EUR',
-    balance: 15420.50,
-    iban: 'NL91ABNA0417164300',
-    status: 'active',
-    lastSync: '2025-01-15T10:30:00Z',
-    transactions: 45,
-  },
-  {
-    id: 2,
-    name: 'Revolut Business USD',
-    type: 'Business',
-    currency: 'USD',
-    balance: 8230.75,
-    accountNo: '12345678',
-    sortCode: '12-34-56',
-    status: 'active',
-    lastSync: '2025-01-15T10:30:00Z',
-    transactions: 23,
-  },
-  {
-    id: 3,
-    name: 'Local Bank Account',
-    type: 'Business',
-    currency: 'EUR',
-    balance: 5670.25,
-    iban: 'NL02ABNA0123456789',
-    status: 'active',
-    lastSync: '2025-01-14T15:45:00Z',
-    transactions: 12,
-  },
-]
-
-const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0)
+interface BankAccount {
+  id: string
+  name: string
+  type: 'Business' | 'Personal'
+  currency: string
+  balance: number
+  iban?: string
+  accountNo?: string
+  sortCode?: string
+  status: 'active' | 'inactive'
+  lastSync: string
+  transactions: number
+}
 
 export default function AccountsPage() {
+  const { user } = useAuth()
+  const [accounts, setAccounts] = useState<BankAccount[] | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (user) {
+      loadAccounts()
+    }
+  }, [user])
+
+  const loadAccounts = async () => {
+    if (!user) return
+    
+    setIsLoading(true)
+    setError('')
+    
+    try {
+      // For now, no bank accounts are stored in Supabase, so show null
+      // In a real implementation, you would fetch from Supabase
+      setAccounts(null)
+    } catch (error) {
+      console.error('Error loading accounts:', error)
+      setError('Failed to load accounts')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const totalBalance = accounts?.reduce((sum, account) => sum + account.balance, 0) || 0
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-black">Bank Accounts</h1>
+            <p className="text-gray-500 text-sm mt-1">Loading your accounts...</p>
+          </div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-xl p-6 animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-black">Bank Accounts</h1>
+            <p className="text-gray-500 text-sm mt-1">Error loading accounts</p>
+          </div>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+          <div className="flex items-center space-x-3">
+            <AlertCircle className="w-6 h-6 text-red-600" />
+            <div>
+              <h3 className="text-lg font-semibold text-red-800">Error</h3>
+              <p className="text-red-600">{error}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-black">Bank Accounts</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage your connected bank accounts and balances</p>
+          <p className="text-gray-500 text-sm mt-1">
+            {accounts ? `Manage your ${accounts.length} connected bank accounts` : 'No accounts connected'}
+          </p>
         </div>
         <div className="flex items-center space-x-3">
           <button className="px-4 py-2 border border-gray-300 text-black rounded-lg hover:bg-gray-50 transition-colors">
             <RefreshCw className="w-4 h-4" />
           </button>
-          <button className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors">
+          <button 
+            onClick={() => window.location.href = '/dashboard/settings'}
+            className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+          >
             <Plus className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* Total Balance */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-500">Total Balance</p>
-            <p className="text-3xl font-bold text-black mt-1">€{totalBalance.toLocaleString()}</p>
-            <p className="text-sm text-gray-500 mt-1">Across {accounts.length} accounts</p>
-          </div>
-          <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-            <CreditCard className="w-8 h-8 text-black" />
+      {accounts && accounts.length > 0 ? (
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Total Balance</p>
+              <p className="text-3xl font-bold text-black mt-1">€{totalBalance.toLocaleString()}</p>
+              <p className="text-sm text-gray-500 mt-1">Across {accounts.length} accounts</p>
+            </div>
+            <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+              <CreditCard className="w-8 h-8 text-black" />
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
+          <Database className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-600 mb-2">No Bank Accounts Connected</h3>
+          <p className="text-gray-500 mb-4">Connect your bank accounts to automatically sync transactions.</p>
+          <button 
+            onClick={() => window.location.href = '/dashboard/settings'}
+            className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            Connect Account
+          </button>
+        </div>
+      )}
 
       {/* Accounts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {accounts.map((account) => (
+      {accounts && accounts.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {accounts.map((account) => (
           <div key={account.id} className="bg-white border border-gray-200 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
@@ -148,37 +217,8 @@ export default function AccountsPage() {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Connection Status */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-black mb-4">Connection Status</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <div>
-              <p className="text-sm font-medium text-black">Revolut Business</p>
-              <p className="text-xs text-gray-500">Connected • 2 accounts</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <div>
-              <p className="text-sm font-medium text-black">Local Bank</p>
-              <p className="text-xs text-gray-500">Connected • 1 account</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg opacity-50">
-            <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">More Banks</p>
-              <p className="text-xs text-gray-400">Coming soon</p>
-            </div>
-          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 } 

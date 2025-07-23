@@ -27,26 +27,38 @@ interface TaxCalculation {
 }
 
 export default function TaxCalculatorPage() {
-  const [revenue, setRevenue] = useState(85420)
-  const [expenses, setExpenses] = useState(23150)
-  const [hoursWorked, setHoursWorked] = useState(1450)
+  const [revenue, setRevenue] = useState('')
+  const [expenses, setExpenses] = useState('')
+  const [hoursWorked, setHoursWorked] = useState('')
   const [isStarter, setIsStarter] = useState(false)
   const [vatRate, setVatRate] = useState(21)
 
-  const calculateTax = (): TaxCalculation => {
-    const grossProfit = revenue - expenses
-    const zelfstandigenaftrek = hoursWorked >= 1225 ? 2470 : 0
-    const startersaftrek = isStarter && hoursWorked >= 1225 ? 2123 : 0
+  const calculateTax = (): TaxCalculation | null => {
+    if (!revenue || !expenses || !hoursWorked) {
+      return null
+    }
+
+    const revenueNum = parseFloat(revenue)
+    const expensesNum = parseFloat(expenses)
+    const hoursWorkedNum = parseFloat(hoursWorked)
+
+    if (isNaN(revenueNum) || isNaN(expensesNum) || isNaN(hoursWorkedNum)) {
+      return null
+    }
+
+    const grossProfit = revenueNum - expensesNum
+    const zelfstandigenaftrek = hoursWorkedNum >= 1225 ? 2470 : 0
+    const startersaftrek = isStarter && hoursWorkedNum >= 1225 ? 2123 : 0
     const mkbWinstvrijstelling = Math.max(0, (grossProfit - zelfstandigenaftrek - startersaftrek) * 0.127)
     const taxableIncome = Math.max(0, grossProfit - zelfstandigenaftrek - startersaftrek - mkbWinstvrijstelling)
     const estimatedTax = taxableIncome * 0.37 // Simplified tax rate
-    const vatDue = revenue * (vatRate / 100)
-    const vatReclaimable = expenses * (vatRate / 100)
+    const vatDue = revenueNum * (vatRate / 100)
+    const vatReclaimable = expensesNum * (vatRate / 100)
     const netProfit = grossProfit - estimatedTax
 
     return {
-      revenue,
-      expenses,
+      revenue: revenueNum,
+      expenses: expensesNum,
       grossProfit,
       zelfstandigenaftrek,
       startersaftrek,
@@ -91,7 +103,7 @@ export default function TaxCalculatorPage() {
                 <input
                   type="number"
                   value={revenue}
-                  onChange={(e) => setRevenue(Number(e.target.value))}
+                  onChange={(e) => setRevenue(e.target.value)}
                   className="w-full px-4 py-3 bg-white border border-gray-300 text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                 />
               </div>
@@ -101,7 +113,7 @@ export default function TaxCalculatorPage() {
                 <input
                   type="number"
                   value={expenses}
-                  onChange={(e) => setExpenses(Number(e.target.value))}
+                  onChange={(e) => setExpenses(e.target.value)}
                   className="w-full px-4 py-3 bg-white border border-gray-300 text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                 />
               </div>
@@ -111,7 +123,7 @@ export default function TaxCalculatorPage() {
                 <input
                   type="number"
                   value={hoursWorked}
-                  onChange={(e) => setHoursWorked(Number(e.target.value))}
+                  onChange={(e) => setHoursWorked(e.target.value)}
                   className="w-full px-4 py-3 bg-white border border-gray-300 text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                 />
                 <p className="text-xs text-gray-500 mt-1">Minimum 1225 hours required for deductions</p>
@@ -182,7 +194,7 @@ export default function TaxCalculatorPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Gross Profit</p>
-                  <p className="text-2xl font-bold text-black mt-1">€{taxData.grossProfit.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-black mt-1">€{taxData?.grossProfit.toLocaleString()}</p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-green-600" />
@@ -194,7 +206,7 @@ export default function TaxCalculatorPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Estimated Tax</p>
-                  <p className="text-2xl font-bold text-red-600 mt-1">€{taxData.estimatedTax.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-red-600 mt-1">€{taxData?.estimatedTax.toLocaleString()}</p>
                 </div>
                 <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                   <TrendingDown className="w-6 h-6 text-red-600" />
@@ -206,7 +218,7 @@ export default function TaxCalculatorPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Net Profit</p>
-                  <p className="text-2xl font-bold text-black mt-1">€{taxData.netProfit.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-black mt-1">€{taxData?.netProfit.toLocaleString()}</p>
                 </div>
                 <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                   <DollarSign className="w-6 h-6 text-black" />
@@ -221,35 +233,35 @@ export default function TaxCalculatorPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between py-3 border-b border-gray-200">
                 <span className="text-sm text-gray-600">Revenue</span>
-                <span className="text-sm font-medium text-black">€{taxData.revenue.toLocaleString()}</span>
+                <span className="text-sm font-medium text-black">€{taxData?.revenue.toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between py-3 border-b border-gray-200">
                 <span className="text-sm text-gray-600">Expenses</span>
-                <span className="text-sm font-medium text-black">-€{taxData.expenses.toLocaleString()}</span>
+                <span className="text-sm font-medium text-black">-€{taxData?.expenses.toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between py-3 border-b border-gray-200">
                 <span className="text-sm font-medium text-black">Gross Profit</span>
-                <span className="text-sm font-bold text-black">€{taxData.grossProfit.toLocaleString()}</span>
+                <span className="text-sm font-bold text-black">€{taxData?.grossProfit.toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between py-3 border-b border-gray-200">
                 <span className="text-sm text-gray-600">Zelfstandigenaftrek</span>
-                <span className="text-sm font-medium text-green-600">-€{taxData.zelfstandigenaftrek.toLocaleString()}</span>
+                <span className="text-sm font-medium text-green-600">-€{taxData?.zelfstandigenaftrek.toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between py-3 border-b border-gray-200">
                 <span className="text-sm text-gray-600">Startersaftrek</span>
-                <span className="text-sm font-medium text-green-600">-€{taxData.startersaftrek.toLocaleString()}</span>
+                <span className="text-sm font-medium text-green-600">-€{taxData?.startersaftrek.toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between py-3 border-b border-gray-200">
                 <span className="text-sm text-gray-600">MKB Winstvrijstelling</span>
-                <span className="text-sm font-medium text-green-600">-€{taxData.mkbWinstvrijstelling.toLocaleString()}</span>
+                <span className="text-sm font-medium text-green-600">-€{taxData?.mkbWinstvrijstelling.toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between py-3 border-b border-gray-200">
                 <span className="text-sm font-medium text-black">Taxable Income</span>
-                <span className="text-sm font-bold text-black">€{taxData.taxableIncome.toLocaleString()}</span>
+                <span className="text-sm font-bold text-black">€{taxData?.taxableIncome.toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between py-3">
                 <span className="text-sm font-medium text-black">Estimated Tax (37%)</span>
-                <span className="text-sm font-bold text-red-600">€{taxData.estimatedTax.toLocaleString()}</span>
+                <span className="text-sm font-bold text-red-600">€{taxData?.estimatedTax.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -261,16 +273,16 @@ export default function TaxCalculatorPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">VAT Due (Output)</span>
-                  <span className="text-sm font-medium text-red-600">€{taxData.vatDue.toLocaleString()}</span>
+                  <span className="text-sm font-medium text-red-600">€{taxData?.vatDue.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">VAT Reclaimable (Input)</span>
-                  <span className="text-sm font-medium text-green-600">€{taxData.vatReclaimable.toLocaleString()}</span>
+                  <span className="text-sm font-medium text-green-600">€{taxData?.vatReclaimable.toLocaleString()}</span>
                 </div>
-                <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                  <span className="text-sm font-medium text-black">Net VAT Due</span>
-                  <span className="text-sm font-bold text-black">€{(taxData.vatDue - taxData.vatReclaimable).toLocaleString()}</span>
-                </div>
+                                  <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                    <span className="text-sm font-medium text-black">Net VAT Due</span>
+                    <span className="text-sm font-bold text-black">€{((taxData?.vatDue || 0) - (taxData?.vatReclaimable || 0)).toLocaleString()}</span>
+                  </div>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="text-sm font-medium text-black mb-2">VAT Rate: {vatRate}%</h4>
