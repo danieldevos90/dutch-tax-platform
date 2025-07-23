@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { taxFlowProcessor } from '@/lib/tax-flow-processor'
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,6 +18,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const { taxFlowProcessor } = await import('@/lib/tax-flow-processor')
     const calculation = await taxFlowProcessor.calculateTaxFromFlow({
       businessType,
       annualRevenue,

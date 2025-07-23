@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { taxFlowProcessor } from '@/lib/tax-flow-processor'
-import { supabaseTransactionService } from '@/lib/supabase-transactions'
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,6 +21,7 @@ export async function POST(request: NextRequest) {
       }
     ]
     
+    const { taxFlowProcessor } = await import('@/lib/tax-flow-processor')
     const result = await taxFlowProcessor.processRevolutTransactions(
       mockTransactions,
       businessType,

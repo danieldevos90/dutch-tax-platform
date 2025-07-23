@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// import { supabase } from './supabase'
 
 export interface Transaction {
   id?: string
@@ -56,49 +51,13 @@ export interface TaxFlowSession {
 }
 
 export class SupabaseTransactionService {
-  /**
-   * Save transactions to Supabase
-   */
+  // Temporarily disabled for build
   async saveTransactions(transactions: Transaction[]): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { data, error } = await supabase
-        .from('transactions')
-        .insert(transactions)
-        .select()
-
-      if (error) {
-        console.error('Error saving transactions:', error)
-        return { success: false, error: error.message }
-      }
-
-      return { success: true }
-    } catch (error) {
-      console.error('Error saving transactions:', error)
-      return { success: false, error: 'Failed to save transactions' }
-    }
+    return { success: false, error: 'Supabase temporarily disabled' }
   }
 
-  /**
-   * Get transactions for a user
-   */
   async getTransactions(userId: string): Promise<{ data: Transaction[] | null; error?: string }> {
-    try {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', userId)
-        .order('date', { ascending: false })
-
-      if (error) {
-        console.error('Error fetching transactions:', error)
-        return { data: null, error: error.message }
-      }
-
-      return { data: data || [] }
-    } catch (error) {
-      console.error('Error fetching transactions:', error)
-      return { data: null, error: 'Failed to fetch transactions' }
-    }
+    return { data: null, error: 'Supabase temporarily disabled' }
   }
 
   /**
