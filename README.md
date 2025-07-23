@@ -19,6 +19,14 @@ A comprehensive Dutch tax automation platform with Revolut Business API integrat
 - **Account Syncing** - Real-time account and transaction data
 - **Multi-Environment Support** - Sandbox and production ready
 
+### AI Tax Agent (Gemini AI)
+- **Expert Tax Advice** - Personalized Dutch tax guidance
+- **Transaction Categorization** - AI-powered expense classification
+- **Tax Calculations** - Intelligent tax liability computation
+- **Tax Optimization** - Recommendations for tax efficiency
+- **Dutch Tax Compliance** - Up-to-date 2025 tax rules
+- **Multi-Business Support** - Eenmanszaak, BV, VOF, Maatschap
+
 ## 🛠 Tech Stack
 
 - **Frontend**: Next.js 13+ with App Router, React 18, TypeScript
@@ -26,6 +34,7 @@ A comprehensive Dutch tax automation platform with Revolut Business API integrat
 - **Authentication**: Supabase Auth
 - **Database**: Supabase PostgreSQL
 - **Banking API**: Revolut Business API
+- **AI Integration**: Google Gemini AI
 - **Icons**: Lucide React
 - **Deployment**: Vercel (recommended)
 
@@ -66,6 +75,9 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # Revolut API Configuration (Optional - for production)
 REVOLUT_SANDBOX_MODE=true
+
+# Gemini AI Configuration
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
 ### 4. Run Development Server
@@ -183,6 +195,12 @@ npm start
 - `POST /api/revolut/sync` - Sync accounts and transactions
 - `GET /api/revolut/sync` - Get connection status
 
+### AI Tax Agent Endpoints
+
+- `POST /api/ai/tax-advice` - Get personalized tax advice
+- `POST /api/ai/categorize` - Categorize transactions
+- `POST /api/ai/calculate-tax` - Calculate tax liability
+
 ### Authentication Endpoints
 
 - `POST /api/auth/login` - User login
@@ -210,6 +228,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - [Revolut Business API](https://developer.revolut.com) for banking integration
+- [Google Gemini AI](https://ai.google.dev/gemini) for intelligent tax assistance
 - [Supabase](https://supabase.com) for authentication and database
 - [Next.js](https://nextjs.org) for the React framework
 - [Tailwind CSS](https://tailwindcss.com) for styling
