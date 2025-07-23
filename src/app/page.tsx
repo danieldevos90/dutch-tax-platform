@@ -17,14 +17,14 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#121212]">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <div className="w-16 h-16 bg-[#60A5FA] rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-lg">
-            <span className="text-2xl font-bold text-white">₹</span>
+          <div className="w-16 h-16 bg-black rounded-xl flex items-center justify-center mb-6 mx-auto shadow-lg">
+            <span className="text-2xl font-bold text-white">T</span>
           </div>
-          <div className="text-white font-semibold text-lg mb-2">Dutch Tax Platform</div>
-          <div className="text-gray-400 text-sm mb-6">Loading your dashboard...</div>
-          <div className="w-8 h-8 border-2 border-[#60A5FA]/30 border-t-[#60A5FA] rounded-full animate-spin mx-auto"></div>
+          <div className="text-black font-semibold text-lg mb-2">DutchTax</div>
+          <div className="text-gray-500 text-sm mb-6">Loading your dashboard...</div>
+          <div className="w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin mx-auto"></div>
         </div>
       </div>
     )
@@ -35,13 +35,13 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#121212]">
+    <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="text-center">
-        <div className="w-16 h-16 bg-[#60A5FA] rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-lg">
-          <span className="text-2xl font-bold text-white">₹</span>
+        <div className="w-16 h-16 bg-black rounded-xl flex items-center justify-center mb-6 mx-auto shadow-lg">
+          <span className="text-2xl font-bold text-white">T</span>
         </div>
-        <div className="text-white font-semibold text-lg mb-2">Redirecting to Dashboard...</div>
-        <div className="text-gray-400 text-sm">Please wait...</div>
+        <div className="text-black font-semibold text-lg mb-2">Redirecting to Dashboard...</div>
+        <div className="text-gray-500 text-sm">Please wait...</div>
       </div>
     </div>
   )
