@@ -1,17 +1,21 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/AuthProvider'
-import LoginForm from '@/components/auth/LoginForm'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+import DashboardLayout from '@/components/dashboard/DashboardLayout'
 
-function AppContent() {
+export default function DashboardRootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const { user, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (user && !loading) {
-      router.push('/dashboard')
+    if (!loading && !user) {
+      router.push('/')
     }
   }, [user, loading, router])
 
@@ -31,22 +35,8 @@ function AppContent() {
   }
 
   if (!user) {
-    return <LoginForm />
+    return null // Will redirect to home page
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[#121212]">
-      <div className="text-center">
-        <div className="w-16 h-16 bg-[#60A5FA] rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-lg">
-          <span className="text-2xl font-bold text-white">₹</span>
-        </div>
-        <div className="text-white font-semibold text-lg mb-2">Redirecting to Dashboard...</div>
-        <div className="text-gray-400 text-sm">Please wait...</div>
-      </div>
-    </div>
-  )
-}
-
-export default function Home() {
-  return <AppContent />
-}
+  return <DashboardLayout>{children}</DashboardLayout>
+} 
