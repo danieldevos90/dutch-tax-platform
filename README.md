@@ -27,6 +27,15 @@ A comprehensive Dutch tax automation platform with Revolut Business API integrat
 - **Dutch Tax Compliance** - Up-to-date 2025 tax rules
 - **Multi-Business Support** - Eenmanszaak, BV, VOF, Maatschap
 
+### Tax Flow Processing
+- **Excel Integration** - Upload and process Excel transaction files
+- **AI-Powered Categorization** - Automatic Dutch tax categorization
+- **Batch Processing** - Handle large transaction datasets efficiently
+- **Automated Tax Calculations** - Generate tax liability from transactions
+- **Comprehensive Reports** - AI-generated tax reports with recommendations
+- **Multi-Step Workflow** - Upload → AI Processing → Calculate → Report
+- **Downloadable Reports** - Export tax analysis in text format
+
 ## 🛠 Tech Stack
 
 - **Frontend**: Next.js 13+ with App Router, React 18, TypeScript
@@ -35,6 +44,7 @@ A comprehensive Dutch tax automation platform with Revolut Business API integrat
 - **Database**: Supabase PostgreSQL
 - **Banking API**: Revolut Business API
 - **AI Integration**: Google Gemini AI
+- **Excel Processing**: XLSX library
 - **Icons**: Lucide React
 - **Deployment**: Vercel (recommended)
 
@@ -200,6 +210,12 @@ npm start
 - `POST /api/ai/tax-advice` - Get personalized tax advice
 - `POST /api/ai/categorize` - Categorize transactions
 - `POST /api/ai/calculate-tax` - Calculate tax liability
+
+### Tax Flow Processing Endpoints
+
+- `POST /api/tax-flow/process-excel` - Process Excel file with AI categorization
+- `POST /api/tax-flow/calculate-tax` - Calculate tax from processed transactions
+- `POST /api/tax-flow/generate-report` - Generate comprehensive tax report
 
 ### Authentication Endpoints
 
