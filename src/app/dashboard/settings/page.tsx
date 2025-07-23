@@ -31,7 +31,7 @@ export default function SettingsPage() {
   const [isConnecting, setIsConnecting] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
   const [showCertificate, setShowCertificate] = useState(false)
-  const [certificateData, setCertificateData] = useState<any>(null)
+  const [certificateData, setCertificateData] = useState<{ instructions: string[]; publicKey: string } | null>(null)
   const [clientId, setClientId] = useState('')
   const [step, setStep] = useState<'initial' | 'certificate' | 'authorize' | 'connected'>('initial')
   const [error, setError] = useState('')
@@ -472,7 +472,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-black">More Integrations Coming Soon</h3>
-                  <p className="text-gray-500 text-sm">We're working on adding more bank integrations</p>
+                  <p className="text-gray-500 text-sm">We&apos;re working on adding more bank integrations</p>
                 </div>
               </div>
             </div>
