@@ -83,6 +83,11 @@ export interface TaxOptimizationResponse {
 
 export class GeminiTaxAgent {
   private model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  
+  // Public getter for model access
+  getModel() {
+    return this.model
+  }
 
   /**
    * Get personalized Dutch tax advice

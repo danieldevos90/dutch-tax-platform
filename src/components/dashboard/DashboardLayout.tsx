@@ -16,7 +16,8 @@ import {
   BarChart3,
   PieChart,
   DollarSign,
-  Bot
+  Bot,
+  FileSpreadsheet
 } from 'lucide-react'
 import { useAuth } from '@/components/auth/AuthProvider'
 
@@ -27,6 +28,7 @@ const navigation = [
   { name: 'Invoices', href: '/dashboard/invoices', icon: FileText },
   { name: 'Tax Calculator', href: '/dashboard/tax-calculator', icon: Calculator },
   { name: 'Tax Agent', href: '/dashboard/tax-agent', icon: Bot },
+  { name: 'Tax Flow', href: '/dashboard/tax-flow', icon: FileSpreadsheet },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 
