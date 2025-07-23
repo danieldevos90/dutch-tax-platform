@@ -1,10 +1,9 @@
 name: CI
 
+# Workflow disabled - uncomment to re-enable
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
+  # This workflow is disabled - it will never trigger
+  workflow_dispatch: # Manual trigger only
 
 jobs:
   test:

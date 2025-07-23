@@ -116,10 +116,10 @@ export default function DashboardOverview() {
   }
 
   if (isLoading) {
-    return (
+  return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
+      <div className="flex items-center justify-between">
+        <div>
             <h1 className="text-2xl font-bold text-black">Dashboard Overview</h1>
             <p className="text-gray-500 text-sm mt-1">Loading your business data...</p>
           </div>
@@ -148,13 +148,13 @@ export default function DashboardOverview() {
         <div className="bg-red-50 border border-red-200 rounded-xl p-6">
           <div className="flex items-center space-x-3">
             <AlertCircle className="w-6 h-6 text-red-600" />
-            <div>
+          <div>
               <h3 className="text-lg font-semibold text-red-800">Error</h3>
               <p className="text-red-600">{error}</p>
             </div>
           </div>
         </div>
-      </div>
+          </div>
     )
   }
 
@@ -176,7 +176,7 @@ export default function DashboardOverview() {
             Export Report
           </button>
         </div>
-      </div>
+        </div>
 
       {/* Stats Grid */}
       {stats ? (
@@ -186,18 +186,18 @@ export default function DashboardOverview() {
               <div>
                 <p className="text-sm font-medium text-gray-500">Total Revenue</p>
                 <p className="text-2xl font-bold text-black mt-1">€{stats.totalRevenue.toLocaleString()}</p>
-              </div>
+          </div>
               <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                 <DollarSign className="w-6 h-6 text-black" />
-              </div>
-            </div>
+          </div>
+        </div>
             <div className="flex items-center mt-4">
               <ArrowUpRight className="w-4 h-4 text-green-600" />
               <span className="text-sm font-medium ml-1 text-green-600">
                 {stats.revenueChange > 0 ? '+' : ''}{stats.revenueChange}%
               </span>
               <span className="text-sm text-gray-500 ml-1">from last month</span>
-            </div>
+          </div>
           </div>
 
           <div className="bg-white border border-gray-200 rounded-xl p-6">
@@ -205,10 +205,10 @@ export default function DashboardOverview() {
               <div>
                 <p className="text-sm font-medium text-gray-500">Total Expenses</p>
                 <p className="text-2xl font-bold text-black mt-1">€{stats.totalExpenses.toLocaleString()}</p>
-              </div>
+          </div>
               <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                 <CreditCard className="w-6 h-6 text-black" />
-              </div>
+      </div>
             </div>
             <div className="flex items-center mt-4">
               <ArrowDownRight className="w-4 h-4 text-red-600" />
@@ -285,8 +285,8 @@ export default function DashboardOverview() {
             </button>
           </div>
           {recentTransactions && recentTransactions.length > 0 ? (
-            <div className="space-y-4">
-              {recentTransactions.map((transaction) => (
+          <div className="space-y-4">
+            {recentTransactions.map((transaction) => (
                 <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
@@ -354,10 +354,10 @@ export default function DashboardOverview() {
                         {task.status}
                       </span>
                     </div>
-                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+          </div>
           ) : (
             <div className="text-center py-8">
               <Calendar className="w-8 h-8 text-gray-400 mx-auto mb-2" />
