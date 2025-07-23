@@ -44,7 +44,6 @@ jobs:
       run: npm test
       env:
         CI: true
-      continue-on-error: true
 
   deploy:
     needs: test
