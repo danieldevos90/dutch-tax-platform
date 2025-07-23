@@ -229,7 +229,7 @@ export default function TaxAgentPage() {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as 'advice' | 'categorize' | 'calculate' | 'optimize')}
                 className={`flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.id ? 'bg-gray-100 text-black' : 'text-gray-600 hover:text-black hover:bg-gray-50'}`}
               >
                 <Icon className="w-4 h-4" />
@@ -254,7 +254,7 @@ export default function TaxAgentPage() {
                 <label className="block text-sm font-medium text-black mb-2">Business Type</label>
                 <select
                   value={businessType}
-                  onChange={(e) => setBusinessType(e.target.value as any)}
+                  onChange={(e) => setBusinessType(e.target.value as 'eenmanszaak' | 'bv' | 'vof' | 'maatschap')}
                   className="w-full px-4 py-3 bg-white border border-gray-300 text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                 >
                   <option value="eenmanszaak">Eenmanszaak (Sole Proprietorship)</option>

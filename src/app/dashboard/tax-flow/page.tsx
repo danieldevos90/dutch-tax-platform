@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Upload, FileSpreadsheet, Calculator, Download, AlertCircle, CheckCircle, Loader2, Bot, TrendingUp, BarChart3, FileText, CreditCard, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { supabaseTransactionService } from '@/lib/supabase-transactions'
+import { supabaseTransactionService, Transaction } from '@/lib/supabase-transactions'
 
 interface ProcessedTransaction {
   date: string
@@ -85,8 +85,17 @@ export default function TaxFlowPage() {
   const [taxReport, setTaxReport] = useState<string>('')
   
   // Existing data state
-  const [existingTransactions, setExistingTransactions] = useState<any[] | null>(null)
-  const [transactionSummary, setTransactionSummary] = useState<any>(null)
+  const [existingTransactions, setExistingTransactions] = useState<Transaction[] | null>(null)
+  const [transactionSummary, setTransactionSummary] = useState<{
+    totalTransactions: number
+    totalAmount: number
+    totalIncome: number
+    totalExpenses: number
+    totalDeductible: number
+    totalVatReclaimable: number
+    kiaEligibleAmount: number
+    categories: Record<string, number>
+  } | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 

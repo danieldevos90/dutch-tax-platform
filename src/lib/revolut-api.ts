@@ -149,7 +149,7 @@ class RevolutAPI {
   async getAccounts(): Promise<RevolutAccount[]> {
     try {
       const accounts = await this.makeRequest('/accounts')
-      return accounts.map((account: any) => ({
+      return accounts.map((account: Record<string, unknown>) => ({
         ...account,
         status: 'connected' as const,
         lastSync: new Date().toISOString(),

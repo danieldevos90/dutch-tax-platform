@@ -150,7 +150,15 @@ export class TaxFlowProcessor {
    * Process Revolut transactions with AI categorization
    */
   async processRevolutTransactions(
-    transactions: any[],
+    transactions: Array<{
+      created_at?: string
+      date?: string
+      description?: string
+      reference?: string
+      amount: string | number
+      counterparty?: { name?: string }
+      merchant?: string
+    }>,
     businessType: 'eenmanszaak' | 'bv' | 'vof' | 'maatschap',
     businessSector?: string,
     userId?: string
@@ -162,7 +170,7 @@ export class TaxFlowProcessor {
       const excelTransactions: ExcelTransaction[] = transactions.map(t => ({
         date: t.created_at || t.date || new Date().toISOString().split('T')[0],
         description: t.description || t.reference || '',
-        amount: parseFloat(t.amount) || 0,
+        amount: parseFloat(String(t.amount)) || 0,
         merchant: t.counterparty?.name || t.merchant || undefined,
         category: undefined, // Will be set by AI
         notes: t.reference || undefined
@@ -389,14 +397,17 @@ Format the report in clear, professional language with proper Dutch tax terminol
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
             
             // Skip header row and map to transactions
-            const transactions: ExcelTransaction[] = jsonData.slice(1).map((row: any) => ({
-              date: row[0] || new Date().toISOString().split('T')[0],
-              description: row[1] || '',
-              amount: parseFloat(row[2]) || 0,
-              merchant: row[3] || undefined,
-              category: row[4] || undefined,
-              notes: row[5] || undefined
-            })).filter(t => t.description && t.amount !== 0)
+            const transactions: ExcelTransaction[] = jsonData.slice(1).map((row: unknown) => {
+              const rowArray = row as unknown[]
+              return {
+                date: String(rowArray[0] || new Date().toISOString().split('T')[0]),
+                description: String(rowArray[1] || ''),
+                amount: parseFloat(String(rowArray[2])) || 0,
+                merchant: rowArray[3] ? String(rowArray[3]) : undefined,
+                category: rowArray[4] ? String(rowArray[4]) : undefined,
+                notes: rowArray[5] ? String(rowArray[5]) : undefined
+              }
+            }).filter(t => t.description && t.amount !== 0)
             
             resolve(transactions)
           }
@@ -599,7 +610,7 @@ Focus on practical steps the business can take immediately.
    */
   private async getOptimizationSuggestions(
     flowData: TaxCalculationFlow,
-    calculation: any
+    calculation: TaxFlowCalculationResult
   ): Promise<string[]> {
     try {
       const prompt = `
