@@ -271,15 +271,21 @@ export class TaxFlowProcessor {
         year: 2025
       })
 
+      // Convert TaxCalculationResponse to TaxFlowCalculationResult
+      const taxFlowCalculation: TaxFlowCalculationResult = {
+        ...calculation,
+        potentialSavings: calculation.totalTaxLiability * 0.15, // Estimate 15% potential savings
+        optimizationSuggestions: []
+      }
+
       // Get optimization suggestions
       const optimizationSuggestions = await this.getOptimizationSuggestions(
         flowData,
-        calculation
+        taxFlowCalculation
       )
 
       return {
-        ...calculation,
-        potentialSavings: calculation.totalTaxLiability * 0.15, // Estimate 15% potential savings
+        ...taxFlowCalculation,
         optimizationSuggestions
       }
     } catch (error) {
